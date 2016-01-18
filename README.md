@@ -1,38 +1,64 @@
 # React::Rails::ViewHelperImplementation
 
-Welcome to your new gem! In this directory, you'll find the files you need to be able to package up your Ruby library into a gem. Put your Ruby code in the file `lib/react/rails/view_helper_implementation`. To experiment with that code, run `bin/console` for an interactive prompt.
+This GEM requires react-rails 1.5.0 or higher!
 
-TODO: Delete this and the text above, and describe your gem
+## What problem it solves?
+
+1. Size of inline props placed to the root component tag as attributes may be too huge to:
+  1. Process in browser devtools. So that browser stucks trying to render markup for preview.
+  2. Deliver it to user due to bandwidth (for highload apps).
+2. Inline props placed to the attributes of tag are looking freaky because of its size and HTML safety.
+
+So props we want to place:
+```JSON
+{"foo": "bar"}
+```
+are looking like this:
+```HTML
+{&quot;foo&quot;:&quot;bar&quot;}
+```
+
+##Solution
+Moving inline props to the ```<script type="text/json">{"foo": "bar"}</script>``` will:
+
+1. Reduce the size of data passed to the page in order to render component at the initial state. It's also useful because it reduces bandwidth utilization (even if we are using GZIP).
+2. Allow browser inspector to operate on DOM faster.
+3. Make markup looking more cleaner.
+
+Placing inline props at the end of body speeds up DOM rendering and allows Turbolinks to load this data along with other markup on each request.
+
+## How it works
+`#react_component` method just renders another one `<script>` tag before the component root tag. This `<script>` tag contains JSON with initial data for the component.
 
 ## Installation
 
 Add this line to your application's Gemfile:
 
 ```ruby
-gem 'react-rails-view_helper_implementation'
+gem 'react-rails-view_helper_implementation', github: 'panasyuk/react-rails-view_helper_implementation'
 ```
 
 And then execute:
 
     $ bundle
 
-Or install it yourself as:
-
-    $ gem install react-rails-view_helper_implementation
-
 ## Usage
 
-TODO: Write usage instructions here
+Add following line to your Rails application config:
+```
+#config/application.rb
+config.react.view_helper_implementation = React::Rails::ViewHelperImplementation
+```
 
-## Development
+And then add following asset pipeline directive to your application.js instead of react_ujs:
+```
+/*= require react_ujs_with_separate_props
+```
 
-After checking out the repo, run `bin/setup` to install dependencies. Then, run `rake test` to run the tests. You can also run `bin/console` for an interactive prompt that will allow you to experiment.
-
-To install this gem onto your local machine, run `bundle exec rake install`. To release a new version, update the version number in `version.rb`, and then run `bundle exec rake release`, which will create a git tag for the version, push git commits and tags, and push the `.gem` file to [rubygems.org](https://rubygems.org).
 
 ## Contributing
 
-Bug reports and pull requests are welcome on GitHub at https://github.com/[USERNAME]/react-rails-view_helper_implementation. This project is intended to be a safe, welcoming space for collaboration, and contributors are expected to adhere to the [Contributor Covenant](http://contributor-covenant.org) code of conduct.
+Bug reports and pull requests are welcome on GitHub at https://github.com/panasyuk/react-rails-view_helper_implementation. This project is intended to be a safe, welcoming space for collaboration, and contributors are expected to adhere to the [Contributor Covenant](http://contributor-covenant.org) code of conduct.
 
 
 ## License
